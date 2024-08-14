@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: default
+  cloud:
+    config:
+      name: client
+      uri: http://cloudserver-inst:7000
+    import:configserver:

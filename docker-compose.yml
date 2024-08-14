@@ -1,0 +1,168 @@
+version: "3.8"
+
+services:
+  postgres-animal:
+    image: postgres:15.2
+    container_name: postgres-animal-inst
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres-data-animal:/var/lib/postgresql/data
+    networks:
+      - postgres-animal
+
+  postgres-client:
+    image: postgres:15.2
+    container_name: postgres-client-inst
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - postgres-client
+  cloudserver:
+    container_name: cloudserver-inst
+    image: cloudserver
+    build:
+      context: ./cloud-config
+      dockerfile: docker/Dockerfile
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka/apps/cloud-config"]
+      interval: 5s
+      timeout: 5s
+      retries: 150
+    ports:
+      - "7000:7000"
+    environment:
+      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+    depends_on:
+      discovery:
+        condition: service_healthy
+    networks:
+      - discovery-cloud-server-network
+      - config-client
+      - config-animal
+
+  msclient:
+    
+    image: ms-client
+    build:
+      context: ./client
+      dockerfile: docker/Dockerfile
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka/apps/client"]
+      interval: 5s
+      timeout: 5s
+      retries: 150
+
+    environment:
+      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+    networks:
+      - dicovery-client-newtwork
+      - gateway-client-network
+      - config-client
+      - postgres-client
+    depends_on:
+      discovery:
+        condition: service_healthy
+      cloudserver:
+        condition: service_healthy
+
+  msanimal:
+    image: ms-amimal
+    build:
+      context: ./animal
+      dockerfile: docker/Dockerfile
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka/apps/animal"]
+      interval: 5s
+      timeout: 5s
+      retries: 200
+    environment:
+      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+    networks:
+      - dicovery-animal-newtwork
+      - gateway-animal-network
+      - config-animal
+      - postgres-animal
+    depends_on:
+      discovery:
+        condition: service_healthy
+      cloudserver:
+        condition: service_healthy
+
+  discovery:
+    container_name: discovery-inst
+    image: discovery
+    build:
+      context: ./discovery.server
+      dockerfile: docker/Dockerfile
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 500
+    ports:
+      - "${DISCOVERY_SERVER_PORT}:${DISCOVERY_SERVER_PORT}"
+    networks:
+      - dicovery-gateway-network
+      - dicovery-client-newtwork
+      - dicovery-animal-newtwork
+      - discovery-cloud-server-network
+
+  gateway:
+    container_name: gateway-inst
+    image: gateway
+    build:
+      context: ./gateway
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+    depends_on:
+      discovery:
+        condition: service_healthy
+      msclient:
+        condition: service_healthy
+      msanimal:
+        condition: service_healthy
+    networks:
+      - dicovery-gateway-network
+      - gateway-client-network
+      - gateway-animal-network
+
+networks:
+  dicovery-gateway-network:
+    driver: bridge
+  dicovery-client-newtwork:
+    driver: bridge
+  dicovery-animal-newtwork:
+    driver: bridge
+  gateway-client-network:
+    driver: bridge
+  gateway-animal-network:
+    driver: bridge
+  discovery-cloud-server-network:
+    driver: bridge
+  config-client:
+    driver: bridge
+  config-animal:
+    driver: bridge
+  postgres-client:
+    driver: bridge
+  postgres-animal:
+      driver: bridge
+

@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    platform: postgres
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://postgres-animal-inst:5432/postgres
+    username: postgres
+    password: postgres
+  jpa:
+    database: POSTGRESQL
+    hibernate:
+      ddl-auto: update

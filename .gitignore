@@ -1,0 +1,4 @@
+.env
+.idea/
+postgres-data
+postgres-data-animal
