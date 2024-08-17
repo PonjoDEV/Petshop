@@ -29,7 +29,7 @@ public class ValidationCPF {
         }
         var result = 11-(soma%11);
 
-        if (result==10 || result==11) return 0;
+        if (result==10 || result==11) return '0';
         else return (char)(result+48);
         
     }
