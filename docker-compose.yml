@@ -8,6 +8,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 150
     ports:
       - "5433:5432"
     volumes:
@@ -22,12 +27,18 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 150
     ports:
       - "5432:5432"
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
     networks:
       - postgres-client
+
   cloudserver:
     container_name: cloudserver-inst
     image: cloudserver
@@ -77,6 +88,9 @@ services:
         condition: service_healthy
       cloudserver:
         condition: service_healthy
+      postgres-client:
+        condition: service_healthy
+      
 
   msanimal:
     image: ms-amimal
@@ -100,6 +114,8 @@ services:
       discovery:
         condition: service_healthy
       cloudserver:
+        condition: service_healthy
+      postgres-animal:
         condition: service_healthy
 
   discovery:
@@ -164,5 +180,4 @@ networks:
   postgres-client:
     driver: bridge
   postgres-animal:
-      driver: bridge
-
+    driver: bridge
