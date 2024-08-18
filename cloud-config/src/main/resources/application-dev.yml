@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: cloud-config
+  profiles:
+    active: dev
+    include: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: /home/gradle/src/server
