@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface ClientRepository extends JpaRepository<Client, UUID> {
     Optional<Client> findByCpf(String cpf);
+    Optional<Client> deleteByCpf(String cpf);
+    //Optional<Client> deleteById(String id);
 }

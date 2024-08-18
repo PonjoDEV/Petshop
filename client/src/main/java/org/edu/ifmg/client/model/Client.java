@@ -1,5 +1,6 @@
 package org.edu.ifmg.client.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -16,6 +17,7 @@ import lombok.*;
 public class Client extends BaseModel {
 
     private String name;
+    @Column(unique=true)
     private String cpf;
     private Integer age;
 

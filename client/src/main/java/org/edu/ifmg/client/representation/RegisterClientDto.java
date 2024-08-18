@@ -14,6 +14,6 @@ public class RegisterClientDto {
     @Min(value = 1, message = "Digite um valor válido para a idade") @Max(value = 200, message = "Digite um valor válido para a idade") private Integer age;
 
     public Client toModel(){
-        return Client.builder().name(this.name).age(this.age).cpf(this.cpf).build();
+        return Client.builder().name(this.name).age(this.age).cpf(this.cpf.replaceAll("\\D","")).build();
     }
 }

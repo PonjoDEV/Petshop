@@ -9,5 +9,6 @@ COPY --from=gradle-build ./home/gradle/src/build/libs/*.jar ./app.jar
 
 ENV DISCOVERY_SERVER_PORT=8187
 ENV DISCOVERY_SERVER_URL=discovery-inst
+ENV CONFIG_SERVER_URL=cloudserver-inst
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

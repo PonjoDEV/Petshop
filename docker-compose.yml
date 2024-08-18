@@ -5,11 +5,11 @@ services:
     image: postgres:15.2
     container_name: postgres-animal-inst
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres-animal
+      POSTGRES_PASSWORD: postgres-animal
+      POSTGRES_DB: postgres-animal
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres", "-d", "postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres-animal", "-d", "postgres-animal"]
       interval: 5s
       timeout: 5s
       retries: 150
@@ -24,11 +24,11 @@ services:
     image: postgres:15.2
     container_name: postgres-client-inst
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres-client
+      POSTGRES_PASSWORD: postgres-client
+      POSTGRES_DB: postgres-client
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres", "-d", "postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres-client", "-d", "postgres-client"]
       interval: 5s
       timeout: 5s
       retries: 150
@@ -78,6 +78,7 @@ services:
     environment:
       - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
       - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+      - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
     networks:
       - dicovery-client-newtwork
       - gateway-client-network
@@ -105,6 +106,7 @@ services:
     environment:
       - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
       - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+      - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
     networks:
       - dicovery-animal-newtwork
       - gateway-animal-network
