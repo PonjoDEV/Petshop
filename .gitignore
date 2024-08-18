@@ -1,4 +1,5 @@
 .env
 .idea/
 postgres-data
+postgres-data-dev
 postgres-data-animal

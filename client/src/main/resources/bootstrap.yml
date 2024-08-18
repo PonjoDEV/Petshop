@@ -4,5 +4,5 @@ spring:
   cloud:
     config:
       name: client
-      uri: http://localhost:7000
+      uri: http://${CONFIG_SERVER_URL}:7000
     import:configserver:

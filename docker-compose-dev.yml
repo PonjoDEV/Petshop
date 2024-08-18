@@ -1,0 +1,193 @@
+version: "3.8"
+
+services:
+#  postgres-animal:
+#    image: postgres:15.2
+#    container_name: postgres-animal-inst
+#    environment:
+#      POSTGRES_USER: postgres-animal
+#      POSTGRES_PASSWORD: postgres-animal
+#      POSTGRES_DB: postgres
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready -U postgres-animal", "-d", "postgres"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 150
+#    ports:
+#      - "5433:5432"
+#    volumes:
+#      - ./postgres-data-animal:/var/lib/postgresql/data
+#    networks:
+#      - postgres-animal
+
+  postgres-client:
+    image: postgres:15.2
+    container_name: postgres-client-inst
+    environment:
+      POSTGRES_USER: postgres-client
+      POSTGRES_PASSWORD: postgres-client
+      POSTGRES_DB: postgres-client
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres-client", "-d", "postgres-client"]
+      interval: 5s
+      timeout: 5s
+      retries: 150
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data-dev:/var/lib/postgresql/data
+    networks:
+      - postgres-client
+
+  cloudserver:
+    container_name: cloudserver-inst-dev
+    image: gradle:8.6.0-jdk21
+    entrypoint: [ "sh", "./docker/start-dev.sh" ]
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka/apps/cloud-config"]
+      interval: 5s
+      timeout: 5s
+      retries: 150
+    ports:
+      - "7000:7000"
+    environment:
+      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      discovery:
+        condition: service_healthy
+    working_dir: /home/gradle/src
+    volumes:
+      - ./cloud-config:/home/gradle/src
+    networks:
+      - discovery-cloud-server-network
+      - config-client
+      - config-animal
+    env_file:
+      - .env-dev
+
+  msclient:
+    image: gradle:8.6.0-jdk21
+    entrypoint: [ "sh", "./docker/start-dev.sh" ]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka/apps/client"]
+      interval: 5s
+      timeout: 5s
+      retries: 150
+    working_dir: /home/gradle/src
+    ports:
+      - "8085:8085"
+    volumes:
+      - ./client:/home/gradle/src
+    environment:
+      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+      - CONFIG_SERVER_URL=${CONFIG_SERVER_URL}
+      - SPRING_PROFILES_ACTIVE=dev
+    networks:
+      - dicovery-client-newtwork
+      - gateway-client-network
+      - config-client
+      - postgres-client
+    depends_on:
+      discovery:
+        condition: service_healthy
+      cloudserver:
+        condition: service_healthy
+      postgres-client:
+        condition: service_healthy
+
+
+#  msanimal:
+#    image: ms-amimal
+#    build:
+#      context: ./animal
+#      dockerfile: docker/Dockerfile
+#    healthcheck:
+#      test: [ "CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka/apps/animal"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 200
+#    environment:
+#      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+#      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+#    networks:
+#      - dicovery-animal-newtwork
+#      - gateway-animal-network
+#      - config-animal
+#      - postgres-animal
+#    depends_on:
+#      discovery:
+#        condition: service_healthy
+#      cloudserver:
+#        condition: service_healthy
+#      postgres-animal:
+#        condition: service_healthy
+
+  discovery:
+    container_name: discovery-inst-dev
+    image: gradle:8.6.0-jdk21
+    entrypoint: [ "sh", "./docker/start-dev.sh" ]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/actuator/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 500
+    ports:
+      - "${DISCOVERY_SERVER_PORT}:${DISCOVERY_SERVER_PORT}"
+    working_dir: /home/gradle/src
+    volumes:
+        - ./discovery.server:/home/gradle/src
+    networks:
+      - dicovery-gateway-network
+      - dicovery-client-newtwork
+      - dicovery-animal-newtwork
+      - discovery-cloud-server-network
+    env_file:
+      - .env-dev
+
+#  gateway:
+#    container_name: gateway-inst
+#    image: gateway
+#    build:
+#      context: ./gateway
+#      dockerfile: docker/Dockerfile
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      - DISCOVERY_SERVER_PORT=${DISCOVERY_SERVER_PORT}
+#      - DISCOVERY_SERVER_URL=${DISCOVERY_SERVER_URL}
+#    depends_on:
+#      discovery:
+#        condition: service_healthy
+#      msclient:
+#        condition: service_healthy
+#      msanimal:
+#        condition: service_healthy
+#    networks:
+#      - dicovery-gateway-network
+#      - gateway-client-network
+#      - gateway-animal-network
+
+networks:
+  dicovery-gateway-network:
+    driver: bridge
+  dicovery-client-newtwork:
+    driver: bridge
+  dicovery-animal-newtwork:
+    driver: bridge
+  gateway-client-network:
+    driver: bridge
+  gateway-animal-network:
+    driver: bridge
+  discovery-cloud-server-network:
+    driver: bridge
+  config-client:
+    driver: bridge
+  config-animal:
+    driver: bridge
+  postgres-client:
+    driver: bridge
+  postgres-animal:
+    driver: bridge
