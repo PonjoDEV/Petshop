@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: cloud-config
+  profiles:
+    active: default
+    include: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: ${CONFIG_SERVER_FILE}
+
+server:
+  port: 7000
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka
+---
+
+spring:
+  application:
+    name: cloud-config
+  profiles:
+    active: dev
+    include: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: /home/gradle/src/server
+
+server:
+  port: 7000
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://${DISCOVERY_SERVER_URL}:${DISCOVERY_SERVER_PORT}/eureka
